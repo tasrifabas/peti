@@ -24,7 +24,6 @@ function DashboardInner() {
   const currentFolderId = searchParams.get("folder");
 
   const supabase = useMemo(() => createClient(), []);
-  const blobCache = useRef<Map<string, string>>(new Map());
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -54,9 +53,13 @@ function DashboardInner() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserEmail(data.user?.email ?? null);
-      setUserId(data.user?.id ?? null);
+    // getSession() membaca sesi dari local storage tanpa perlu round-trip
+    // ke server Supabase (beda dengan getUser() yang selalu memvalidasi ke
+    // server). Middleware sudah memvalidasi sesi di setiap request, jadi di
+    // sini cukup untuk keperluan tampilan (email, userId) — jauh lebih cepat.
+    supabase.auth.getSession().then(({ data }) => {
+      setUserEmail(data.session?.user.email ?? null);
+      setUserId(data.session?.user.id ?? null);
     });
   }, [supabase]);
 
@@ -163,15 +166,13 @@ function DashboardInner() {
 
   async function handleDownload(file: FileRow) {
     try {
-      const blob = await archive.downloadFileBlob(supabase, file);
-      const url = URL.createObjectURL(blob);
+      const url = await archive.getSignedUrl(supabase, file);
       const a = document.createElement("a");
       a.href = url;
       a.download = file.name;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err: any) {
       pushToast(err?.message ?? "Gagal mengunduh file.", "error");
     }
@@ -179,12 +180,10 @@ function DashboardInner() {
 
   const getBlobUrl = useCallback(
     async (file: FileRow) => {
-      const cached = blobCache.current.get(file.id);
-      if (cached) return cached;
-      const blob = await archive.downloadFileBlob(supabase, file);
-      const url = URL.createObjectURL(blob);
-      blobCache.current.set(file.id, url);
-      return url;
+      // Signed URL dibuat langsung dari Supabase (bukan download file penuh
+      // ke memori dulu), jadi cukup cepat untuk dibuat ulang tiap kali —
+      // tidak perlu di-cache, dan tidak akan pernah kadaluarsa saat dipakai.
+      return archive.getSignedUrl(supabase, file);
     },
     [supabase]
   );
