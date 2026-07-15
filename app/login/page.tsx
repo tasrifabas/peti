@@ -1,62 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { KeyRound, Mail, ArrowRight, Loader2, Box } from "lucide-react";
+import { KeyRound, ArrowRight, Loader2, Box } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { APP_LOGIN_EMAIL } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
-
-type Mode = "signin" | "invite";
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [mode, setMode] = useState<Mode>("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes("type=invite") || hash.includes("type=recovery")) {
-      setMode("invite");
-    }
-  }, []);
-
-  async function handleSignIn(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: APP_LOGIN_EMAIL,
+      password: pin,
+    });
     setLoading(false);
     if (error) {
-      setError("Email atau kata sandi salah. Coba lagi.");
-      return;
-    }
-    router.push("/");
-    router.refresh();
-  }
-
-  async function handleSetPassword(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (password.length < 8) {
-      setError("Kata sandi minimal 8 karakter.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Konfirmasi kata sandi tidak cocok.");
-      return;
-    }
-    setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
+      setError("PIN salah. Coba lagi.");
       return;
     }
     router.push("/");
@@ -96,71 +66,25 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {mode === "signin" ? (
-          <>
-            <h1 className="mb-1 font-display text-2xl font-semibold text-ink">Masuk</h1>
-            <p className="mb-6 text-sm text-ink-soft">
-              Khusus untuk orang yang sudah diundang ke Peti.
-            </p>
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <Field icon={<Mail className="h-4 w-4" />}>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
-                />
-              </Field>
-              <Field icon={<KeyRound className="h-4 w-4" />}>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Kata sandi"
-                  className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
-                />
-              </Field>
-              {error && <p className="text-sm text-coral">{error}</p>}
-              <SubmitButton loading={loading} label="Masuk" />
-            </form>
-          </>
-        ) : (
-          <>
-            <h1 className="mb-1 font-display text-2xl font-semibold text-ink">
-              Buat kata sandi
-            </h1>
-            <p className="mb-6 text-sm text-ink-soft">
-              Selamat datang! Buat kata sandi untuk akunmu di Peti.
-            </p>
-            <form onSubmit={handleSetPassword} className="space-y-4">
-              <Field icon={<KeyRound className="h-4 w-4" />}>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Kata sandi baru"
-                  className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
-                />
-              </Field>
-              <Field icon={<KeyRound className="h-4 w-4" />}>
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Ulangi kata sandi"
-                  className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
-                />
-              </Field>
-              {error && <p className="text-sm text-coral">{error}</p>}
-              <SubmitButton loading={loading} label="Simpan & masuk" />
-            </form>
-          </>
-        )}
+        <h1 className="mb-1 font-display text-2xl font-semibold text-ink">Masuk</h1>
+        <p className="mb-6 text-sm text-ink-soft">Masukkan PIN untuk membuka Peti.</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Field icon={<KeyRound className="h-4 w-4" />}>
+            <input
+              type="password"
+              inputMode="text"
+              autoFocus
+              required
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              placeholder="PIN"
+              className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
+            />
+          </Field>
+          {error && <p className="text-sm text-coral">{error}</p>}
+          <SubmitButton loading={loading} label="Masuk" />
+        </form>
       </motion.div>
     </main>
   );
