@@ -37,15 +37,27 @@ export async function getFolder(
   return data as FolderRow | null;
 }
 
+// Dulu fungsi ini memanggil getFolder() satu per satu sambil naik ke folder
+// induk (N round-trip ke database untuk folder yang dalam nested-nya).
+// Sekarang cukup satu query untuk ambil semua folder (id, nama, parent_id),
+// lalu susun path-nya di memori — jauh lebih cepat, terutama untuk folder
+// yang bersarang dalam.
 export async function getFolderPath(
   supabase: SupabaseClient,
   folderId: string | null
 ): Promise<FolderRow[]> {
+  if (!folderId) return [];
+
+  const { data, error } = await supabase.from("folders").select("*");
+  if (error) throw error;
+
+  const byId = new Map<string, FolderRow>((data as FolderRow[]).map((f) => [f.id, f]));
+
   const path: FolderRow[] = [];
-  let currentId = folderId;
+  let currentId: string | null = folderId;
   let guard = 0;
   while (currentId && guard < 50) {
-    const folder = await getFolder(supabase, currentId);
+    const folder = byId.get(currentId);
     if (!folder) break;
     path.unshift(folder);
     currentId = folder.parent_id;
@@ -167,6 +179,22 @@ export async function downloadFileBlob(supabase: SupabaseClient, file: FileRow):
   const { data, error } = await supabase.storage.from(BUCKET).download(file.storage_path);
   if (error) throw error;
   return data;
+}
+
+// Untuk preview/unduh, signed URL jauh lebih cepat daripada download() di atas:
+// browser bisa langsung streaming dari server Supabase (mendukung partial
+// content untuk PDF/video besar), tanpa harus menunggu seluruh file selesai
+// diunduh ke memori dulu sebelum bisa ditampilkan.
+export async function getSignedUrl(
+  supabase: SupabaseClient,
+  file: FileRow,
+  expiresInSeconds = 300
+): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(file.storage_path, expiresInSeconds);
+  if (error) throw error;
+  return data.signedUrl;
 }
 
 export async function searchArchive(
