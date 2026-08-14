@@ -197,6 +197,36 @@ export async function getSignedUrl(
   return data.signedUrl;
 }
 
+// Thumbnail grid: minta versi yang sudah di-resize kecil langsung dari
+// Supabase (image transformation), bukan file ukuran asli. Jauh lebih
+// hemat bandwidth & lebih cepat dimuat untuk grid dengan banyak file.
+// Kalau project Supabase tidak mendukung transformasi gambar (bukan Pro
+// plan / addon belum aktif), otomatis fallback ke signed URL biasa.
+export async function getThumbnailUrl(
+  supabase: SupabaseClient,
+  file: FileRow,
+  size = 160
+): Promise<string> {
+  const isImage = (file.mime_type ?? "").startsWith("image/");
+  if (!isImage) {
+    // Video: tidak ada transformasi, cukup signed URL biasa. Elemen
+    // <video preload="metadata"> di FileCard hanya menarik sedikit byte
+    // (bukan seluruh file), jadi ini tetap ringan.
+    return getSignedUrl(supabase, file, 3600);
+  }
+
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(file.storage_path, 3600, {
+      transform: { width: size, height: size, resize: "cover", quality: 60 },
+    });
+  if (error || !data) {
+    // Fallback: transformasi tidak tersedia -> pakai signed URL biasa.
+    return getSignedUrl(supabase, file, 3600);
+  }
+  return data.signedUrl;
+}
+
 export async function searchArchive(
   supabase: SupabaseClient,
   query: string
