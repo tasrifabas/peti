@@ -21,18 +21,18 @@ export default function TopBar({
   onFiles: (files: FileList) => void;
 }) {
   return (
-    <div className="mb-6 space-y-4">
+    <div className="mb-5 space-y-3 sm:mb-6 sm:space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Breadcrumb path={path} onNavigate={onNavigate} />
         <div className="flex items-center gap-2">
           <button
             onClick={onCreateFolder}
-            className="flex items-center gap-2 rounded-xl2 border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-surface-bg"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl2 border border-line bg-surface px-4 py-3 text-sm font-medium text-ink transition-colors hover:bg-surface-bg active:bg-surface-bg sm:flex-none sm:py-2.5"
           >
             <FolderPlus className="h-4 w-4" />
             Folder baru
           </button>
-          <UploadButton onFiles={onFiles} />
+          <UploadButton onFiles={onFiles} className="hidden sm:flex" />
         </div>
       </div>
 
@@ -41,13 +41,13 @@ export default function TopBar({
         <input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Cari file atau folder di seluruh arsip..."
-          className="w-full rounded-xl2 border border-line bg-surface py-2.5 pl-10 pr-10 text-sm text-ink outline-none transition-colors focus:border-violet"
+          placeholder="Cari file atau folder..."
+          className="w-full rounded-xl2 border border-line bg-surface py-3 pl-10 pr-10 text-sm text-ink outline-none transition-colors focus:border-violet sm:py-2.5"
         />
         {search && (
           <button
             onClick={() => onSearchChange("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink-faint hover:text-ink"
             aria-label="Bersihkan pencarian"
           >
             <X className="h-4 w-4" />
