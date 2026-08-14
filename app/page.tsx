@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { FileRow, FolderRow } from "@/lib/types";
 import * as archive from "@/lib/archive";
 import Sidebar from "@/components/Sidebar";
+import MobileHeader from "@/components/MobileHeader";
 import TopBar from "@/components/TopBar";
 import FileGrid from "@/components/FileGrid";
 import NamePromptModal from "@/components/NamePromptModal";
@@ -13,6 +14,7 @@ import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import PreviewModal from "@/components/PreviewModal";
 import ToastStack, { type Toast } from "@/components/ToastStack";
 import DropzoneArea from "@/components/DropzoneArea";
+import UploadButton from "@/components/UploadButton";
 import { Loader2 } from "lucide-react";
 
 type RenameTarget = { kind: "folder" | "file"; item: FolderRow | FileRow } | null;
@@ -217,51 +219,64 @@ function DashboardInner() {
           onLogout={handleLogout}
         />
 
-        <main className="flex-1 px-5 py-6 sm:px-8 sm:py-8">
-          <TopBar
-            path={isSearching ? [] : folderPath}
-            onNavigate={navigate}
-            search={search}
-            onSearchChange={setSearch}
-            onCreateFolder={() => setCreateFolderOpen(true)}
-            onFiles={handleFiles}
-          />
+        <div className="flex min-h-screen flex-1 flex-col">
+          <MobileHeader email={userEmail} onLogout={handleLogout} />
 
-          {uploadingCount > 0 && (
-            <div className="mb-4 flex items-center gap-2 rounded-xl2 border border-line bg-surface px-4 py-2.5 text-sm text-ink-soft animate-fade-up">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-violet" />
-              Mengunggah {uploadingCount} file...
-            </div>
-          )}
-
-          {isSearching && (
-            <p className="mb-4 text-sm text-ink-soft">
-              Hasil pencarian untuk <span className="font-medium text-ink">"{search}"</span>
-            </p>
-          )}
-
-          {loading && !isSearching ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="skeleton h-[70px] rounded-xl2" />
-              ))}
-            </div>
-          ) : (
-            <FileGrid
-              folders={displayedFolders}
-              files={displayedFiles}
-              onOpenFolder={(f) => navigate(f.id)}
-              onOpenFile={(f) => setPreviewFile(f)}
-              onDownloadFile={handleDownload}
-              onRenameFolder={(f) => setRenameTarget({ kind: "folder", item: f })}
-              onRenameFile={(f) => setRenameTarget({ kind: "file", item: f })}
-              onDeleteFolder={(f) => setDeleteTarget({ kind: "folder", item: f })}
-              onDeleteFile={(f) => setDeleteTarget({ kind: "file", item: f })}
-              getThumbnailUrl={getThumbnailUrl}
-              emptyLabel={isSearching ? "Tidak ada hasil ditemukan" : undefined}
+          <main className="flex-1 px-4 pb-28 pt-5 sm:px-8 sm:py-8 md:pb-8">
+            <TopBar
+              path={isSearching ? [] : folderPath}
+              onNavigate={navigate}
+              search={search}
+              onSearchChange={setSearch}
+              onCreateFolder={() => setCreateFolderOpen(true)}
+              onFiles={handleFiles}
             />
-          )}
-        </main>
+
+            {uploadingCount > 0 && (
+              <div className="mb-4 flex items-center gap-2 rounded-xl2 border border-line bg-surface px-4 py-2.5 text-sm text-ink-soft animate-fade-up">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-violet" />
+                Mengunggah {uploadingCount} file...
+              </div>
+            )}
+
+            {isSearching && (
+              <p className="mb-4 text-sm text-ink-soft">
+                Hasil pencarian untuk <span className="font-medium text-ink">"{search}"</span>
+              </p>
+            )}
+
+            {loading && !isSearching ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="skeleton h-[70px] rounded-xl2" />
+                ))}
+              </div>
+            ) : (
+              <FileGrid
+                folders={displayedFolders}
+                files={displayedFiles}
+                onOpenFolder={(f) => navigate(f.id)}
+                onOpenFile={(f) => setPreviewFile(f)}
+                onDownloadFile={handleDownload}
+                onRenameFolder={(f) => setRenameTarget({ kind: "folder", item: f })}
+                onRenameFile={(f) => setRenameTarget({ kind: "file", item: f })}
+                onDeleteFolder={(f) => setDeleteTarget({ kind: "folder", item: f })}
+                onDeleteFile={(f) => setDeleteTarget({ kind: "file", item: f })}
+                getThumbnailUrl={getThumbnailUrl}
+                emptyLabel={isSearching ? "Tidak ada hasil ditemukan" : undefined}
+              />
+            )}
+          </main>
+        </div>
+
+        {/* Tombol unggah mengambang, khusus HP — mudah dijangkau ibu jari,
+            menggantikan tombol "Unggah file" di TopBar yang disembunyikan
+            pada layar kecil. */}
+        <UploadButton
+          onFiles={handleFiles}
+          fab
+          className="fixed bottom-6 right-5 z-30 md:hidden"
+        />
       </div>
 
       <NamePromptModal
