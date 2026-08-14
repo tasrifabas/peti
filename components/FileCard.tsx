@@ -128,7 +128,7 @@ export default function FileCard({
             e.stopPropagation();
             onDownload();
           }}
-          className="rounded-full p-1.5 text-ink-faint opacity-0 transition-all hover:bg-surface-bg hover:text-ink group-hover:opacity-100"
+          className="rounded-full p-2 text-ink-faint opacity-100 transition-all hover:bg-surface-bg hover:text-ink md:p-1.5 md:opacity-0 md:group-hover:opacity-100"
           aria-label="Unduh"
         >
           <Download className="h-4 w-4" />
