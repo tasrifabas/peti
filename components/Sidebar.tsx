@@ -15,7 +15,7 @@ export default function Sidebar({
   onLogout: () => void;
 }) {
   return (
-    <aside className="flex h-full w-full shrink-0 flex-col justify-between border-r border-line bg-surface/60 p-5 backdrop-blur-xl md:w-56">
+    <aside className="hidden h-full w-56 shrink-0 flex-col justify-between border-r border-line bg-surface/60 p-5 backdrop-blur-xl md:flex">
       <div>
         <div className="mb-8 flex items-center gap-2.5 px-1">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-coral via-violet to-blue text-white shadow-glow">
