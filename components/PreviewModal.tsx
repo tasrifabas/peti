@@ -30,7 +30,7 @@ export default function PreviewModal({
       return;
     }
     const kind = fileKind(file.mime_type, file.name);
-    if (kind !== "image" && kind !== "pdf") return;
+    if (kind !== "image" && kind !== "pdf" && kind !== "video") return;
 
     let cancelled = false;
     setLoading(true);
@@ -65,7 +65,17 @@ export default function PreviewModal({
         {!loading && !error && kind === "pdf" && url && (
           <iframe src={url} title={file.name} className="h-[28rem] w-full rounded-xl2" />
         )}
-        {!loading && kind !== "image" && kind !== "pdf" && (
+        {!loading && !error && kind === "video" && url && (
+          <video
+            src={url}
+            controls
+            autoPlay
+            className="max-h-[28rem] w-full rounded-xl2 bg-black object-contain"
+          >
+            Browser Anda tidak mendukung pemutaran video.
+          </video>
+        )}
+        {!loading && kind !== "image" && kind !== "pdf" && kind !== "video" && (
           <div className="flex flex-col items-center gap-3 py-10 text-ink-soft">
             <FileIcon kind={kind} className="h-12 w-12" />
             <p className="text-sm">Pratinjau tidak tersedia untuk tipe file ini.</p>
