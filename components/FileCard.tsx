@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Download, Pencil, Trash2 } from "lucide-react";
 import type { FileRow } from "@/lib/types";
@@ -13,15 +14,42 @@ export default function FileCard({
   onDownload,
   onRename,
   onDelete,
+  getThumbnailUrl,
 }: {
   file: FileRow;
   onOpen: () => void;
   onDownload: () => void;
   onRename: () => void;
   onDelete: () => void;
+  // Opsional: kalau disediakan, thumbnail gambar/video ditampilkan langsung
+  // di kartu (mis. saat folder dibuka), bukan hanya di modal preview.
+  getThumbnailUrl?: (file: FileRow) => Promise<string>;
 }) {
   const kind = fileKind(file.mime_type, file.name);
   const accent = accentForKind(kind);
+
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  const [thumbFailed, setThumbFailed] = useState(false);
+
+  useEffect(() => {
+    if (!getThumbnailUrl || thumbFailed || (kind !== "image" && kind !== "video")) {
+      return;
+    }
+    let cancelled = false;
+    getThumbnailUrl(file)
+      .then((url) => {
+        if (!cancelled) setThumbUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setThumbFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file.id, kind, getThumbnailUrl, thumbFailed]);
+
+  const showThumb = (kind === "image" || kind === "video") && thumbUrl && !thumbFailed;
 
   return (
     <motion.button
@@ -35,9 +63,26 @@ export default function FileCard({
       className="group relative flex items-center gap-3 rounded-xl2 border border-line bg-surface p-3.5 text-left shadow-soft transition-shadow hover:shadow-card"
     >
       <div
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface-bg ${accent}`}
+        className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface-bg ${accent}`}
       >
-        <FileIcon kind={kind} className="h-5 w-5" />
+        {showThumb && kind === "image" && (
+          <img
+            src={thumbUrl}
+            alt={file.name}
+            className="h-full w-full object-cover"
+            onError={() => setThumbFailed(true)}
+          />
+        )}
+        {showThumb && kind === "video" && (
+          <video
+            src={thumbUrl}
+            className="h-full w-full object-cover"
+            muted
+            preload="metadata"
+            onError={() => setThumbFailed(true)}
+          />
+        )}
+        {!showThumb && <FileIcon kind={kind} className="h-5 w-5" />}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-ink">{file.name}</p>
