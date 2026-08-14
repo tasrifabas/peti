@@ -248,6 +248,7 @@ function DashboardInner() {
               onRenameFile={(f) => setRenameTarget({ kind: "file", item: f })}
               onDeleteFolder={(f) => setDeleteTarget({ kind: "folder", item: f })}
               onDeleteFile={(f) => setDeleteTarget({ kind: "file", item: f })}
+              getThumbnailUrl={getBlobUrl}
               emptyLabel={isSearching ? "Tidak ada hasil ditemukan" : undefined}
             />
           )}
