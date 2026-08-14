@@ -16,6 +16,7 @@ export default function FileGrid({
   onRenameFile,
   onDeleteFolder,
   onDeleteFile,
+  getThumbnailUrl,
   emptyLabel,
 }: {
   folders: FolderRow[];
@@ -27,6 +28,7 @@ export default function FileGrid({
   onRenameFile: (f: FileRow) => void;
   onDeleteFolder: (f: FolderRow) => void;
   onDeleteFile: (f: FileRow) => void;
+  getThumbnailUrl?: (file: FileRow) => Promise<string>;
   emptyLabel?: string;
 }) {
   if (folders.length === 0 && files.length === 0) {
@@ -53,6 +55,7 @@ export default function FileGrid({
             onDownload={() => onDownloadFile(file)}
             onRename={() => onRenameFile(file)}
             onDelete={() => onDeleteFile(file)}
+            getThumbnailUrl={getThumbnailUrl}
           />
         ))}
       </AnimatePresence>
