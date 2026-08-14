@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Download, Pencil, Trash2 } from "lucide-react";
 import type { FileRow } from "@/lib/types";
 import { accentForKind, fileKind, formatBytes } from "@/lib/utils";
 import { FileIcon } from "@/components/FileIcon";
 import ItemMenu from "@/components/ItemMenu";
+
+// Cache thumbnail per sesi (di luar komponen, jadi bertahan selama halaman
+// tidak di-reload). Signed URL thumbnail dibuat dengan expiry 1 jam, jadi
+// aman dipakai ulang tanpa fetch berulang saat pindah folder bolak-balik.
+const thumbCache = new Map<string, string>();
 
 export default function FileCard({
   file,
@@ -27,18 +32,44 @@ export default function FileCard({
 }) {
   const kind = fileKind(file.mime_type, file.name);
   const accent = accentForKind(kind);
+  const canThumb = kind === "image" || kind === "video";
 
-  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  const [thumbUrl, setThumbUrl] = useState<string | null>(
+    canThumb ? thumbCache.get(file.id) ?? null : null
+  );
   const [thumbFailed, setThumbFailed] = useState(false);
+  const [inView, setInView] = useState(false);
+  const cardRef = useRef<HTMLButtonElement | null>(null);
+
+  // Hanya mulai muat thumbnail saat kartu benar-benar terlihat (atau
+  // hampir terlihat) di layar, bukan langsung semua sekaligus saat folder
+  // dibuka. Ini mencegah puluhan request paralel untuk folder besar.
+  useEffect(() => {
+    if (!canThumb || thumbUrl || !getThumbnailUrl) return;
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [canThumb, thumbUrl, getThumbnailUrl]);
 
   useEffect(() => {
-    if (!getThumbnailUrl || thumbFailed || (kind !== "image" && kind !== "video")) {
-      return;
-    }
+    if (!inView || !getThumbnailUrl || thumbUrl || thumbFailed || !canThumb) return;
     let cancelled = false;
     getThumbnailUrl(file)
       .then((url) => {
-        if (!cancelled) setThumbUrl(url);
+        if (cancelled) return;
+        thumbCache.set(file.id, url);
+        setThumbUrl(url);
       })
       .catch(() => {
         if (!cancelled) setThumbFailed(true);
@@ -47,12 +78,13 @@ export default function FileCard({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file.id, kind, getThumbnailUrl, thumbFailed]);
+  }, [inView, file.id, canThumb]);
 
-  const showThumb = (kind === "image" || kind === "video") && thumbUrl && !thumbFailed;
+  const showThumb = canThumb && thumbUrl && !thumbFailed;
 
   return (
     <motion.button
+      ref={cardRef}
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -70,6 +102,8 @@ export default function FileCard({
             src={thumbUrl}
             alt={file.name}
             className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
             onError={() => setThumbFailed(true)}
           />
         )}
