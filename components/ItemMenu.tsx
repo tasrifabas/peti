@@ -30,7 +30,7 @@ export default function ItemMenu({ actions }: { actions: MenuAction[] }) {
           e.stopPropagation();
           setOpen((o) => !o);
         }}
-        className="rounded-full p-1.5 text-ink-faint opacity-0 transition-all hover:bg-surface-bg hover:text-ink group-hover:opacity-100 data-[open=true]:opacity-100"
+        className="rounded-full p-2 text-ink-faint opacity-100 transition-all hover:bg-surface-bg hover:text-ink md:p-1.5 md:opacity-0 md:group-hover:opacity-100 md:data-[open=true]:opacity-100"
         data-open={open}
         aria-label="Menu aksi"
       >
@@ -39,7 +39,7 @@ export default function ItemMenu({ actions }: { actions: MenuAction[] }) {
       {open && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-9 z-20 w-44 overflow-hidden rounded-xl2 border border-line bg-surface py-1 shadow-card"
+          className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-xl2 border border-line bg-surface py-1 shadow-card"
         >
           {actions.map((action) => (
             <button
@@ -49,7 +49,7 @@ export default function ItemMenu({ actions }: { actions: MenuAction[] }) {
                 action.onClick();
               }}
               className={cn(
-                "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm transition-colors hover:bg-surface-bg",
+                "flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-surface-bg active:bg-surface-bg",
                 action.danger ? "text-coral" : "text-ink"
               )}
             >
