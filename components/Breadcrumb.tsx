@@ -14,7 +14,7 @@ export default function Breadcrumb({
     <nav className="flex flex-wrap items-center gap-1 text-sm">
       <button
         onClick={() => onNavigate(null)}
-        className="flex items-center gap-1.5 rounded-lg px-2 py-1 font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink"
+        className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink active:bg-surface"
       >
         <Box className="h-3.5 w-3.5" />
         Semua arsip
@@ -24,7 +24,7 @@ export default function Breadcrumb({
           <ChevronRight className="h-3.5 w-3.5 text-ink-faint" />
           <button
             onClick={() => onNavigate(folder.id)}
-            className="rounded-lg px-2 py-1 font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink"
+            className="max-w-[9rem] truncate rounded-lg px-2 py-1.5 font-medium text-ink-soft transition-colors hover:bg-surface hover:text-ink active:bg-surface sm:max-w-none"
           >
             {folder.name}
           </button>
