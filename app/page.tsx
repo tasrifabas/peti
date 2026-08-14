@@ -188,6 +188,15 @@ function DashboardInner() {
     [supabase]
   );
 
+  // Untuk thumbnail di grid: versi resize kecil (bukan file ukuran asli)
+  // supaya lebih cepat dimuat, terutama untuk folder dengan banyak gambar.
+  const getThumbnailUrl = useCallback(
+    async (file: FileRow) => {
+      return archive.getThumbnailUrl(supabase, file, 160);
+    },
+    [supabase]
+  );
+
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -248,7 +257,7 @@ function DashboardInner() {
               onRenameFile={(f) => setRenameTarget({ kind: "file", item: f })}
               onDeleteFolder={(f) => setDeleteTarget({ kind: "folder", item: f })}
               onDeleteFile={(f) => setDeleteTarget({ kind: "file", item: f })}
-              getThumbnailUrl={getBlobUrl}
+              getThumbnailUrl={getThumbnailUrl}
               emptyLabel={isSearching ? "Tidak ada hasil ditemukan" : undefined}
             />
           )}
